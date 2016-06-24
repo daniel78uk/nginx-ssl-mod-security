@@ -5,8 +5,8 @@ MAINTAINER dan78uk
 # Install required dependencies
 RUN yum -y groups mark convert
 RUN yum clean all && yum -y swap fakesystemd systemd
-RUN yum -y groupinstall 'Development Tools'
-RUN yum -y install gcc-c++ pcre-dev pcre-devel zlib-devel make unzip httpd-devel libxml2 libxml2-devel wget openssl-devel
+RUN yum -y groupinstall 'Development Tools' && yum -y clean all
+RUN yum -y install gcc-c++ pcre-dev pcre-devel zlib-devel make unzip httpd-devel libxml2 libxml2-devel wget openssl-devel && yum -y clean all
 
 # Set working dir
 ENV WORKING_DIRECTORY=/opt/nginx_mod_security
@@ -64,7 +64,7 @@ RUN yum -y clean packages
 RUN nginx -V
 
 # Enable basic configurations and import of external configurations
-RUN yum -y install openssl
+RUN yum -y install openssl && yum -y clean all
 RUN rm -rf /etc/nginx/conf.d/*; \
     mkdir -p /etc/nginx/external
 RUN sed -i 's/access_log.*/access_log \/dev\/stdout;/g' /etc/nginx/nginx.conf; \
