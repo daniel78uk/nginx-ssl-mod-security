@@ -47,3 +47,7 @@ Please note, that the Common Name (CN) is important and should be the FQDN to th
     openssl req -x509 -newkey rsa:4086 \
     -keyout key.pem -out cert.pem \
     -days 3650 -nodes -sha256
+
+## Credits
+
+This image was insiper by the work done on this DockerImage https://github.com/MarvAmBass/docker-nginx-ssl-secure
