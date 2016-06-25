@@ -60,9 +60,10 @@ RUN yum -y groups mark convert \
     && yum -y clean all \
     && rm -rf $WORKING_DIRECTORY
 
-# Link nginx and clean solution
+# Link Nginx and clean solution
 RUN ln -s /usr/local/nginx/sbin/nginx /usr/bin/nginx \
     && cp /usr/local/nginx/conf/*.* /etc/nginx/
+# Set workdir
 WORKDIR /etc/nginx
 
 # Check Nginx installation
