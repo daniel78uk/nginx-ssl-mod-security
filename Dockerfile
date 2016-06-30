@@ -1,4 +1,4 @@
-FROM centos:7
+FROM alpine:3.4
 
 MAINTAINER dan78uk
 
@@ -21,11 +21,9 @@ ENV LC_ALL=C
 # 3 Get Mod security configs
 # 4 Compile Nginx
 # 5 Clean solution
-RUN yum -y groups mark convert && \
-    yum -y swap fakesystemd systemd && \
+RUN apk update && \
     echo "#### Install required dependencies ####" && \
-    yum -y --setopt=group_command=objects groupinstall 'Development Tools' && \
-    yum -y install gcc-c++ pcre-dev pcre-devel zlib-devel make unzip httpd-devel libxml2 libxml2-devel wget openssl-devel && \
+    apk add build-base linux-headers bash git pcre-dev unzip libxml2 libxml2-dev wget openssl-dev libtool m4 autoconf automake curl apache2-dev zlib-dev && \
     echo "#### Compile Mod Security ####" && \
     git clone https://github.com/SpiderLabs/ModSecurity.git && \
     cd ModSecurity && \
@@ -55,11 +53,8 @@ RUN yum -y groups mark convert && \
     make install && \
     cd .. && \
     echo "#### Clean solution ####" && \
-    yum -y --setopt=group_command=objects groupremove 'Development Tools' && \
-    yum -y autoremove && \
-    yum -y remove *-devel && \
-    yum -y clean all && \
-    rm -rf $WORKING_DIRECTORY
+    apk del build-base linux-headers git autoconf automake && \
+    rm -rf $WORKING_DIRECTORY modsecurity.conf-recommended nginx-${NGINX_VERSION}.tar.gz nginx-${NGINX_VERSION} owasp-modsecurity-crs.tar.gz
 
 # Link Nginx and clean solution
 RUN ln -s /usr/local/nginx/sbin/nginx /usr/bin/nginx && \
@@ -71,8 +66,7 @@ WORKDIR /etc/nginx
 RUN nginx -V
 
 # Enable basic configurations and import of external configurations
-RUN yum -y install openssl && \
-    yum -y clean all && \
+RUN apk add openssl && \
     rm -rf /etc/nginx/conf.d/* && \
     mkdir -p /etc/nginx/external
 RUN sed -i 's/access_log.*/access_log \/dev\/stdout;/g' /etc/nginx/nginx.conf; \
