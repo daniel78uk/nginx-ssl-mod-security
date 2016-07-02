@@ -12,7 +12,7 @@ ENV LANG C.UTF-8
 ENV LC_ALL=C
 ENV NGINX_VERSION=1.11.1
 ENV MODSEC_VERSION=2.9.1
-ENV NGINX_BASE_CONFIG="\
+ENV NGINX_CONFIG_BASE="\
 	--prefix=/etc/nginx \
 	--sbin-path=/usr/sbin/nginx \
 	--modules-path=/usr/lib/nginx/modules \
@@ -56,7 +56,6 @@ ENV NGINX_BASE_CONFIG="\
 	--with-ipv6 \
 	"
 ENV NGINX_CONFIG_MODSECURITY=" --add-module=$WORKING_DIRECTORY/ModSecurity/nginx/modsecurity "
-ENV NGINX_CONFIG_EXTRA_MODULES=" --with-http_realip_module --with-http_ssl_module "
 
 # 1 Install required dependencies
 # 2 Compile Mod Security
@@ -69,27 +68,27 @@ RUN \
     apk update && \
     echo "#### Install required dependencies ####" && \
     apk add --no-cache \
-      build-base \
-      linux-headers \
-      bash \
-      git \
-      pcre-dev \
-      unzip \
-      libxml2 \
-      libxml2-dev \
-      wget \
-      openssl-dev \
-      libtool \
-      m4 \
+      apache2-dev \
       autoconf \
       automake \
+      bash \
+      build-base \
       curl \
       gd-dev \
       geoip-dev \
+      git \
+      libtool \
+      libxml2 \
+      libxml2-dev \
+      libxslt-dev \
+      linux-headers \
+      m4 \
+      openssl-dev \
+      pcre-dev \
       perl-dev \
-      apache2-dev \
-      zlib-dev \
-      libxslt-dev && \
+      unzip \
+      wget \
+      zlib-dev && \
     echo "#### Compile Mod Security ####" && \
     git clone https://github.com/SpiderLabs/ModSecurity.git && \
     cd ModSecurity && \
@@ -114,19 +113,19 @@ RUN \
     wget http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz && \
     tar -xvzf nginx-${NGINX_VERSION}.tar.gz && \
     cd nginx-${NGINX_VERSION}/ && \
-    ./configure $NGINX_BASE_CONFIG $NGINX_CONFIG_MODSECURITY $NGINX_CONFIG_EXTRA_MODULES && \
+    ./configure $NGINX_CONFIG_BASE $NGINX_CONFIG_MODSECURITY && \
     make && \
     make install && \
     rm /etc/nginx/nginx.conf && \
     cd .. && \
     echo "#### Clean solution ####" && \
     apk del \
-      build-base \
-      linux-headers \
-      git \
+      *.dev \
       autoconf \
       automake \
-      *.dev && \
+      build-base \
+      git \
+      linux-headers && \
     rm -rf $WORKING_DIRECTORY \
       modsecurity.conf-recommended \
       nginx-${NGINX_VERSION}.tar.gz \
