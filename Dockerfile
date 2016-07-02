@@ -121,11 +121,11 @@ RUN \
     cd .. && \
     echo "#### Clean solution ####" && \
     apk del \
-      build-base
-      linux-headers
-      git
-      autoconf
-      automake
+      build-base \
+      linux-headers \
+      git \
+      autoconf \
+      automake \
       *.dev && \
     rm -rf $WORKING_DIRECTORY \
       modsecurity.conf-recommended \
