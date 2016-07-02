@@ -9,11 +9,53 @@ WORKDIR $WORKING_DIRECTORY
 
 # ENV build variables
 ENV LANG C.UTF-8
-ENV NPS_VERSION=1.9.32.2
 ENV NGINX_VERSION=1.11.1
 ENV MODSEC_VERSION=2.9.1
-ENV NGINX_ADD_MODULES=" --add-module=$WORKING_DIRECTORY/ModSecurity/nginx/modsecurity "
-ENV NGINX_EXTRA_MODULES=" --with-http_realip_module --with-http_ssl_module "
+ENV NGINX_BASE_CONFIG="\
+	--prefix=/etc/nginx \
+	--sbin-path=/usr/sbin/nginx \
+	--modules-path=/usr/lib/nginx/modules \
+	--conf-path=/etc/nginx/nginx.conf \
+	--error-log-path=/var/log/nginx/error.log \
+	--http-log-path=/var/log/nginx/access.log \
+	--pid-path=/var/run/nginx.pid \
+	--lock-path=/var/run/nginx.lock \
+	--http-client-body-temp-path=/var/cache/nginx/client_temp \
+	--http-proxy-temp-path=/var/cache/nginx/proxy_temp \
+	--http-fastcgi-temp-path=/var/cache/nginx/fastcgi_temp \
+	--http-uwsgi-temp-path=/var/cache/nginx/uwsgi_temp \
+	--http-scgi-temp-path=/var/cache/nginx/scgi_temp \
+	--user=nginx \
+	--group=nginx \
+	--with-http_ssl_module \
+	--with-http_realip_module \
+	--with-http_addition_module \
+	--with-http_sub_module \
+	--with-http_dav_module \
+	--with-http_flv_module \
+	--with-http_mp4_module \
+	--with-http_gunzip_module \
+	--with-http_gzip_static_module \
+	--with-http_random_index_module \
+	--with-http_secure_link_module \
+	--with-http_stub_status_module \
+	--with-http_auth_request_module \
+	--with-http_xslt_module=dynamic \
+	--with-http_image_filter_module=dynamic \
+	--with-http_geoip_module=dynamic \
+	--with-http_perl_module=dynamic \
+	--with-threads \
+	--with-stream \
+	--with-stream_ssl_module \
+	--with-http_slice_module \
+	--with-mail \
+	--with-mail_ssl_module \
+	--with-file-aio \
+	--with-http_v2_module \
+	--with-ipv6 \
+	"
+ENV NGINX_CONFIG_MODSECURITY=" --add-module=$WORKING_DIRECTORY/ModSecurity/nginx/modsecurity "
+ENV NGINX_CONFIG_EXTRA_MODULES=" --with-http_realip_module --with-http_ssl_module "
 ENV LC_ALL=C
 
 # 1 Install required dependencies
@@ -21,9 +63,33 @@ ENV LC_ALL=C
 # 3 Get Mod security configs
 # 4 Compile Nginx
 # 5 Clean solution
-RUN apk update && \
+RUN \
+    addgroup -S nginx && \
+    adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx && \
+    apk update && \
     echo "#### Install required dependencies ####" && \
-    apk add build-base linux-headers bash git pcre-dev unzip libxml2 libxml2-dev wget openssl-dev libtool m4 autoconf automake curl apache2-dev zlib-dev && \
+    apk add --no-cache \
+      build-base \
+      linux-headers \
+      bash \
+      git \
+      pcre-dev \
+      unzip \
+      libxml2 \
+      libxml2-dev \
+      wget \
+      openssl-dev \
+      libtool \
+      m4 \
+      autoconf \
+      automake \
+      curl \
+      gd-dev \
+      geoip-dev \
+      perl-dev \
+      apache2-dev \
+      zlib-dev \
+      libxslt-dev && \
     echo "#### Compile Mod Security ####" && \
     git clone https://github.com/SpiderLabs/ModSecurity.git && \
     cd ModSecurity && \
@@ -48,17 +114,16 @@ RUN apk update && \
     wget http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz && \
     tar -xvzf nginx-${NGINX_VERSION}.tar.gz && \
     cd nginx-${NGINX_VERSION}/ && \
-    ./configure $NGINX_ADD_MODULES $NGINX_EXTRA_MODULES && \
+    ./configure $NGINX_BASE_CONFIG $NGINX_CONFIG_MODSECURITY $NGINX_CONFIG_EXTRA_MODULES && \
     make && \
     make install && \
+    rm /etc/nginx/nginx.conf && \
     cd .. && \
     echo "#### Clean solution ####" && \
     apk del build-base linux-headers git autoconf automake && \
     rm -rf $WORKING_DIRECTORY modsecurity.conf-recommended nginx-${NGINX_VERSION}.tar.gz nginx-${NGINX_VERSION} owasp-modsecurity-crs.tar.gz
 
-# Link Nginx and clean solution
-RUN ln -s /usr/local/nginx/sbin/nginx /usr/bin/nginx && \
-    cp /usr/local/nginx/conf/*.* /etc/nginx/
+
 # Set workdir
 WORKDIR /etc/nginx
 
@@ -69,10 +134,11 @@ RUN nginx -V
 RUN apk add openssl && \
     rm -rf /etc/nginx/conf.d/* && \
     mkdir -p /etc/nginx/external
-RUN sed -i 's/access_log.*/access_log \/dev\/stdout;/g' /etc/nginx/nginx.conf; \
-    sed -i 's/error_log.*/error_log \/dev\/stdout info;/g' /etc/nginx/nginx.conf;
+ADD nginx.conf /etc/nginx/nginx.conf
 ADD basic.conf /etc/nginx/conf.d/basic.conf
 ADD ssl.conf /etc/nginx/conf.d/ssl.conf
+RUN sed -i 's/access_log.*/access_log \/dev\/stdout;/g' /etc/nginx/nginx.conf; \
+    sed -i 's/error_log.*/error_log \/dev\/stdout info;/g' /etc/nginx/nginx.conf;
 ADD entrypoint.sh /opt/entrypoint.sh
 RUN chmod a+x /opt/entrypoint.sh
 ENTRYPOINT ["/opt/entrypoint.sh"]

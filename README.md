@@ -50,4 +50,4 @@ Please note, that the Common Name (CN) is important and should be the FQDN to th
 
 ## Credits
 
-This image was insiper by the work done on this DockerImage https://github.com/MarvAmBass/docker-nginx-ssl-secure
+This image was inspired by the work done on https://github.com/nginxinc/docker-nginx and https://github.com/MarvAmBass/docker-nginx-ssl-secure
