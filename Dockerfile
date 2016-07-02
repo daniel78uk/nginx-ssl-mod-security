@@ -9,6 +9,7 @@ WORKDIR $WORKING_DIRECTORY
 
 # ENV build variables
 ENV LANG C.UTF-8
+ENV LC_ALL=C
 ENV NGINX_VERSION=1.11.1
 ENV MODSEC_VERSION=2.9.1
 ENV NGINX_BASE_CONFIG="\
@@ -56,7 +57,6 @@ ENV NGINX_BASE_CONFIG="\
 	"
 ENV NGINX_CONFIG_MODSECURITY=" --add-module=$WORKING_DIRECTORY/ModSecurity/nginx/modsecurity "
 ENV NGINX_CONFIG_EXTRA_MODULES=" --with-http_realip_module --with-http_ssl_module "
-ENV LC_ALL=C
 
 # 1 Install required dependencies
 # 2 Compile Mod Security
@@ -120,8 +120,18 @@ RUN \
     rm /etc/nginx/nginx.conf && \
     cd .. && \
     echo "#### Clean solution ####" && \
-    apk del build-base linux-headers git autoconf automake && \
-    rm -rf $WORKING_DIRECTORY modsecurity.conf-recommended nginx-${NGINX_VERSION}.tar.gz nginx-${NGINX_VERSION} owasp-modsecurity-crs.tar.gz
+    apk del \
+      build-base
+      linux-headers
+      git
+      autoconf
+      automake
+      *.dev && \
+    rm -rf $WORKING_DIRECTORY \
+      modsecurity.conf-recommended \
+      nginx-${NGINX_VERSION}.tar.gz \
+      nginx-${NGINX_VERSION} \
+      owasp-modsecurity-crs.tar.gz
 
 
 # Set workdir
